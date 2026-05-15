@@ -1,0 +1,31 @@
+# Render deployment manifest.
+# Used by render.com Blueprints: https://render.com/docs/blueprint-spec
+#
+# What this declares:
+#   - A free-tier Python web service that runs the bot in webhook mode.
+#   - One required env var (BOT_TOKEN) — set it in the Render dashboard
+#     before the first deploy, otherwise the service will crash on startup.
+#   - Health check at `/healthz` so Render can confirm the service is live
+#     and so UptimeRobot has a stable URL to ping.
+#
+# Caveat: Render's free tier has an ephemeral filesystem — the SQLite
+# database file is wiped on every redeploy / cold restart. For a small
+# group bot this is acceptable (reputation just resets). To get full
+# persistence, switch to a free PostgreSQL provider (e.g. Neon) and
+# update Database accordingly.
+
+services:
+  - type: web
+    name: reputation-bot
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: PORT
+        value: "8000"
+      - key: DB_PATH
+        value: /tmp/reputation.db
+      # WEBHOOK_URL is auto-derived from $RENDER_EXTERNAL_URL — no need to set
+      # it manually unless you want to override (e.g. behind a custom domain).
