@@ -2,20 +2,23 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from pathlib import Path
 
 import pytest
 
 from reputation_bot.config import REPUTATION_LIMIT
-from reputation_bot.database import Database, clamp_reputation
+from reputation_bot.database import Database, clamp_reputation, create_database
 
 
 @pytest.fixture
-async def db(tmp_path: Path) -> Database:
-    database = Database(str(tmp_path / "test.db"))
+async def db(tmp_path: Path) -> AsyncIterator[Database]:
+    database = create_database(str(tmp_path / "test.db"))
     await database.connect()
-    yield database
-    await database.close()
+    try:
+        yield database
+    finally:
+        await database.close()
 
 
 async def test_upsert_and_lookup(db: Database) -> None:

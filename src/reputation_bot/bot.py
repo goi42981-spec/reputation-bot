@@ -10,14 +10,14 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from .config import Config
-from .database import Database
+from .database import create_database
 from .handlers import make_router
 
 logger = logging.getLogger(__name__)
 
 
 async def run(config: Config) -> None:
-    db = Database(config.db_path)
+    db = create_database(config.database_url)
     await db.connect()
     try:
         bot = Bot(

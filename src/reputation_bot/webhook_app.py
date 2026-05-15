@@ -16,7 +16,10 @@ Optional environment variables:
     (https://core.telegram.org/bots/api#setwebhook). If unset, a random one
     is generated on each startup (acceptable because Telegram will be told
     about it during setWebhook).
-  - ``DB_PATH``: Path to the SQLite database file (default ``reputation.db``).
+  - ``DATABASE_URL``: Postgres connection URI (``postgres://...``) for
+    persistent storage. When unset, falls back to the SQLite file at
+    ``DB_PATH`` (default ``reputation.db``) — note that on Render's free
+    tier the filesystem is ephemeral, so use Postgres for production.
   - ``OWNER_ID``: Telegram user ID with super-owner rights across all chats.
 """
 
@@ -36,7 +39,7 @@ from aiogram.types import Update
 from fastapi import FastAPI, Header, HTTPException, Request
 
 from .config import Config
-from .database import Database
+from .database import create_database
 from .handlers import make_router
 
 logger = logging.getLogger(__name__)
@@ -80,7 +83,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
 
     config = Config.from_env()
-    db = Database(config.db_path)
+    db = create_database(config.database_url)
     await db.connect()
 
     bot = Bot(
