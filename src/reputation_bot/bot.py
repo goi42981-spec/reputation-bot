@@ -12,6 +12,7 @@ from aiogram.enums import ParseMode
 from .config import Config
 from .database import create_database
 from .handlers import make_router
+from .middlewares import ChatWhitelistMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,9 @@ async def run(config: Config) -> None:
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
         dp = Dispatcher()
+        whitelist = ChatWhitelistMiddleware(config.allowed_chat_ids)
+        dp.message.outer_middleware(whitelist)
+        dp.callback_query.outer_middleware(whitelist)
         dp.include_router(make_router(db, config))
 
         me = await bot.get_me()

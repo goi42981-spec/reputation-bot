@@ -27,5 +27,8 @@ services:
         sync: false
       - key: PORT
         value: "8000"
-      # WEBHOOK_URL is auto-derived from $RENDER_EXTERNAL_URL — no need to set
-      # it manually unless you want to override (e.g. behind a custom domain).
+      # Optional env vars (set in the Render dashboard, not declared here):
+      #   WEBHOOK_URL    — override the auto-derived $RENDER_EXTERNAL_URL.
+      #   ALLOWED_CHAT_IDS — comma-separated whitelist of Telegram chat IDs.
+      #                      Unset = allow any chat; set to lock the bot to
+      #                      specific groups. Use /chatid to discover an ID.
