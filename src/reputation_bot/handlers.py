@@ -112,7 +112,8 @@ HELP_TEXT = (
     "<code>/revoke &lt;@username|ID&gt;</code> — отозвать права модератора (только владелец).\n"
     "<code>/mods</code> — список модераторов.\n"
     "<code>/rep [@username|ID]</code> — посмотреть репутацию (по умолчанию — свою).\n"
-    "<code>/top [N]</code> — топ участников по репутации (по умолчанию 10).\n\n"
+    "<code>/top [N]</code> — топ участников по репутации (по умолчанию 10).\n"
+    "<code>/chatid</code> — узнать ID текущего чата (для настройки whitelist).\n\n"
     f"<b>Лимит репутации:</b> ±{REPUTATION_LIMIT}.\n"
     f"<b>Доступные значения:</b> {', '.join(str(v) for v in POINT_OPTIONS)}."
 )
@@ -125,6 +126,24 @@ def make_router(db: Database, config: Config) -> Router:
     @router.message(Command("start", "help"))
     async def cmd_help(message: Message) -> None:
         await message.answer(HELP_TEXT, parse_mode="HTML")
+
+    @router.message(Command("chatid"))
+    async def cmd_chatid(message: Message) -> None:
+        """Reply with the current chat's ID.
+
+        Used by the operator to discover chat IDs before adding them to
+        ``ALLOWED_CHAT_IDS``. This command bypasses the chat whitelist so it
+        works even from non-whitelisted chats.
+        """
+        chat = message.chat
+        name_parts = [p for p in (chat.first_name, chat.last_name) if p]
+        title = chat.title or " ".join(name_parts) or chat.username or "—"
+        await message.reply(
+            f"<b>Chat ID:</b> <code>{chat.id}</code>\n"
+            f"<b>Type:</b> {chat.type}\n"
+            f"<b>Title:</b> {title}",
+            parse_mode="HTML",
+        )
 
     @router.message(Command("add"))
     async def cmd_add(message: Message, command: CommandObject, bot: Bot) -> None:

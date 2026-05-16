@@ -21,6 +21,7 @@ class Config:
     bot_token: str
     database_url: str
     super_owner_id: int | None
+    allowed_chat_ids: frozenset[int]
 
     @classmethod
     def from_env(cls) -> Config:
@@ -51,8 +52,26 @@ class Config:
         else:
             super_owner_id = None
 
+        # ALLOWED_CHAT_IDS: comma- or whitespace-separated list of Telegram chat IDs.
+        # Empty (or unset) means "no restriction" — the bot responds in any chat.
+        # When non-empty, the bot silently ignores updates from any other chat.
+        # Use the /chatid command to discover a chat's ID.
+        allowed_chat_raw = os.environ.get("ALLOWED_CHAT_IDS", "").strip()
+        allowed: set[int] = set()
+        if allowed_chat_raw:
+            tokens = [t for t in allowed_chat_raw.replace(",", " ").split() if t]
+            for tok in tokens:
+                try:
+                    allowed.add(int(tok))
+                except ValueError as exc:
+                    raise RuntimeError(
+                        "ALLOWED_CHAT_IDS must be a comma- or whitespace-separated list "
+                        f"of integer Telegram chat IDs, got {tok!r}"
+                    ) from exc
+
         return cls(
             bot_token=token,
             database_url=database_url,
             super_owner_id=super_owner_id,
+            allowed_chat_ids=frozenset(allowed),
         )

@@ -41,6 +41,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from .config import Config
 from .database import create_database
 from .handlers import make_router
+from .middlewares import ChatWhitelistMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     dp = Dispatcher()
+    whitelist = ChatWhitelistMiddleware(config.allowed_chat_ids)
+    dp.message.outer_middleware(whitelist)
+    dp.callback_query.outer_middleware(whitelist)
     dp.include_router(make_router(db, config))
 
     webhook_url = _resolve_webhook_url()
